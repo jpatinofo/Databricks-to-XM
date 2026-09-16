@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # Lab 1 — Primer activo gobernado en el Lakehouse
 # MAGIC
@@ -12,7 +16,7 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("usuario", "")
+dbutils.widgets.text("usuario", "jpatinofo")
 dbutils.widgets.text("archivo", "DemandaPerdidas.xlsx")
 
 usuario = dbutils.widgets.get("usuario").strip().lower()
