@@ -10,11 +10,11 @@ Llena una fila por tabla. Reemplaza cada `<…>`. El dueño es un rol de XM, no 
 
 | Capa | Tabla | Grano (qué es una fila) | Dueño | Frescura | Garantías |
 |---|---|---|---|---|---|
-| Bronce | `bronze_energia.demanda_raw` | <un registro publicado, tal como llegó> | <rol> | <cuándo se actualiza> | <qué promete> |
-| Plata | `silver_energia.demanda_diaria` | <…> | <rol> | <…> | <…> |
-| Plata | `silver_energia.dim_ciiu` | <…> | <rol> | <…> | <…> |
-| Oro | `gold_energia.features_demanda_diaria` | <…> | <rol> | <…> | <…> |
-| Oro | `gold_energia.pronostico_demanda` | <…> | <rol> | <…> | <…> |
+| Bronce | `bronze_energia.demanda_raw` | un registro publicado, tal como llegó | Datalake | Diario | Trazabilidad |
+| Plata | `silver_energia.demanda_diaria` | serie-día | Calidad | Diario | Versión actual con calidad |
+| Plata | `silver_energia.dim_ciiu` | categoría CIIU | Calidad | Diario | Categorias CIIU vigentes |
+| Oro | `gold_energia.features_demanda_diaria` | serie-día | Modelo | Diario | Listo para entrenar |
+| Oro | `gold_energia.pronostico_demanda` | serie-día-horizonte | Equipo Demandas | Diario | Listo para usar |
 
 ## Llave de serie
 
@@ -24,12 +24,12 @@ Llena una fila por tabla. Reemplaza cada `<…>`. El dueño es un rol de XM, no 
 
 | Hecho | Decisión | Dónde se implementa |
 |---|---|---|
-| Formato largo (2 filas por serie-día) | <…> | Plata (clase 6) |
-| Publicación con retraso variable y republicaciones | <…> | Bronce (clase 4) / Plata (clase 6) |
-| Series incompletas (4 de 355) | <…> | Plata / features (clase 7) |
-| Regulado vs. no regulado | <…> | Modelo (clase 9) — ver ADR-001 |
-| Ceros (299 serie-días) | <…> | Reglas de calidad (clase 5) |
-| Pérdidas ≤ demanda | <…> | Reglas de calidad (clase 5) |
+| Formato largo (2 filas por serie-día) | pivote de las series | Plata (clase 6) |
+| Publicación con retraso variable y republicaciones | almacenamiento bronce, registro vigente plata | Bronce (clase 4) / Plata (clase 6) |
+| Series incompletas (4 de 355) | activa=false | Plata / features (clase 7) |
+| Regulado vs. no regulado | modelo por tipo de mercado | Modelo (clase 9) — ver ADR-001 |
+| Ceros (299 serie-días) | marcar advertencia e imputar promedio | Reglas de calidad (clase 5) |
+| Pérdidas ≤ demanda | Pérdidas << demanda  | Reglas de calidad (clase 5) |
 
 ## Diagrama
 
