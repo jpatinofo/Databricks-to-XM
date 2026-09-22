@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # Lab 3 — Gobernar tu propio esquema
 # MAGIC
@@ -10,8 +14,8 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("usuario", "")
-dbutils.widgets.text("companero", "")
+dbutils.widgets.text("usuario", "jpatinofo")
+dbutils.widgets.text("companero", "Juancamilo.cuartas@gmail.com")
 usuario = dbutils.widgets.get("usuario").strip().lower()
 companero = dbutils.widgets.get("companero").strip().lower()
 assert usuario, "Escribe tu usuario (el sufijo de tu esquema c01_<usuario>)."
@@ -66,7 +70,13 @@ spark.sql(f"SHOW GRANTS ON TABLE {tabla}").display()
 # MAGIC %md
 # MAGIC **Pregunta.** El error de tu compañero, ¿menciona la tabla o el esquema? ¿Por qué el USE SCHEMA que sigue vigente no le alcanza?
 # MAGIC
-# MAGIC _Tu respuesta:_
+# MAGIC _Tu respuesta:_ Si muestra el siguiente error, se observa que presennta el nombre de la tabla y el esquema al que pertenece
+# MAGIC [INSUFFICIENT_PERMISSIONS] Insufficient privileges:
+# MAGIC User does not have SELECT on Table 'workspace.c01_juancuartas.demanda_raw'. SQLSTATE: 42501
+# MAGIC
+# MAGIC Referente a por que si el USE SCHEMA esta vigente no se puede consultar la tabla es por el hecho que se consulta la tabla a la cual se le revocaron los permisos de lectura
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -85,13 +95,13 @@ spark.sql(f"SHOW GRANTS ON TABLE {tabla}").display()
 spark.sql(f"""
 CREATE OR REPLACE FUNCTION {esquema}.solo_regulado(tipo STRING)
 RETURNS BOOLEAN
-RETURN <condición>
+RETURN current_user()= '{yo}' OR tipo="Regulado" 
 """)
 
 spark.sql(f"""
 CREATE OR REPLACE FUNCTION {esquema}.mascara_kwh(v DOUBLE)
 RETURNS DOUBLE
-RETURN <expresión>
+RETURN CASE WHEN current_user()= '{yo}' THEN v ELSE ROUND(v,-3) END
 """)
 
 # COMMAND ----------
@@ -119,7 +129,7 @@ spark.sql(f"SHOW GRANTS ON TABLE {tabla}").display()
 # MAGIC %md
 # MAGIC **Pregunta.** ¿Qué pasaría si en vez de `account users` el GRANT fuera a un grupo `grp_negocio` que aún no existe? ¿Y si mañana entra una persona nueva a XM: a quién hay que tocar, la tabla o el grupo?
 # MAGIC
-# MAGIC _Tu respuesta:_
+# MAGIC _Tu respuesta:_ Si el GRANT se realiza al grupo grp_negocio y ninguno de los usuarios involucrados se encuentra en dicho grupo, el SELECT fallará. Para el ingreso de nuevas personas se debe ajustar el grupo account users o grp_negocio y agregarlo allí para que herede los permisos
 
 # COMMAND ----------
 
@@ -130,10 +140,10 @@ spark.sql(f"SHOW GRANTS ON TABLE {tabla}").display()
 # COMMAND ----------
 
 # TODO: pon los cuatro tags y los comentarios.
-spark.sql(f"ALTER TABLE {tabla} SET TAGS ('capa' = '<…>', 'dominio' = '<…>', 'owner' = '<…>', 'sensibilidad' = '<…>')")
-spark.sql(f"COMMENT ON TABLE {tabla} IS '<qué contiene, con qué grano, quién la publica>'")
-spark.sql(f"ALTER TABLE {tabla} ALTER COLUMN Valor COMMENT '<…>'")
-spark.sql(f"ALTER TABLE {tabla} ALTER COLUMN FechaPublicacion COMMENT '<…>'")
+spark.sql(f"ALTER TABLE {tabla} SET TAGS ('capa' = 'bronce', 'dominio' = 'energía', 'owner' = 'grp_ingenieria', 'sensibilidad' = 'interna')")
+spark.sql(f"COMMENT ON TABLE {tabla} IS 'Demanda y pérdidas por serie-día, desagregado por tipo de mercado'")
+spark.sql(f"ALTER TABLE {tabla} ALTER COLUMN Valor COMMENT 'Valor en kWh de la variable de interes [Demanda - Perdidas]'")
+spark.sql(f"ALTER TABLE {tabla} ALTER COLUMN FechaPublicacion COMMENT 'Fecha en la que se publica el registro'")
 
 spark.sql(f"SELECT tag_name, tag_value FROM workspace.information_schema.table_tags WHERE schema_name = 'c01_{usuario}' AND table_name = 'demanda_raw'").display()
 
@@ -169,6 +179,11 @@ FROM workspace.information_schema.table_privileges
 WHERE table_schema = 'c01_{usuario}'
 ORDER BY table_name, grantee
 """).display()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC _Tu respuesta:_ Tienen acceso las personas que hagan parte del grupo `account users` y los propietarios del esquema
 
 # COMMAND ----------
 
@@ -224,9 +239,10 @@ def verificar():
     gov = open(os.path.join(raiz, "docs", "governance.md"), encoding="utf-8").read()
     secciones = ["## Catálogos", "## Esquemas", "## Grupos", "## Matriz de privilegios", "## Filtros", "## Secretos", "## Auditoría"]
     checks.append(("governance.md con sus 7 secciones", all(s in gov for s in secciones)))
-    checks.append(("governance.md sin marcadores <…> ni celdas vacías", "<" not in gov and re.search(r"\|\s*\|", gov) is None))
+    checks.append(("governance.md sin marcadores <…> ni celdas vacías", "<" not in gov and re.search(r"\|(?: |\t)*\|", gov) is None))
     checks.append(("governance.md menciona dev, qa y prod", all(c in gov for c in ["dev", "qa", "prod"])))
 
+    
     for nombre, ok in checks:
         print(("OK   " if ok else "FALTA") + "  " + nombre)
     print("\nListo: commit y push." if all(ok for _, ok in checks) else "\nRevisa los puntos marcados FALTA.")
