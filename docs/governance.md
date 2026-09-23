@@ -1,4 +1,6 @@
-# Gobierno: catálogos, grupos y permisos
+# Gobierno de datos — catálogos, grupos y permisos
+
+Quién puede ver y hacer qué, escrito una sola vez. Lo que está aquí es lo que está en Unity Catalog; si difieren, el catálogo tiene la razón y este archivo se corrige.
 
 Quién puede ver y hacer qué, escrito una sola vez. Lo que está aquí es lo que está en Unity Catalog; si difieren, el catálogo tiene la razón y este archivo se corrige.
 

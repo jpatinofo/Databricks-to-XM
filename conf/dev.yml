@@ -1,3 +1,3 @@
 catalog: dev
-volumen_raw: /Volumes/dev/bronze_energia/raw
+volumen_landing: /Volumes/dev/bronze_energia/landing
 experimento: /Shared/xm-demanda/dev
