@@ -24,7 +24,7 @@ Rutas que cambian en cada clase (lo demás del diff es ruido):
 | 2 | `s02` | `docs/architecture.md docs/adr/ADR-001-granularidad-horizonte.md` |
 | 3 | `s03` | `docs/governance.md clases/c03-unity-catalog/notebooks` |
 | 4 | `s04` | `src/xm_demanda/ingest docs/adr/ADR-002-republicaciones.md clases/c04-ingesta/notebooks` |
-| 5 | `s05` | `notebooks/02_silver_pipeline.py src/xm_demanda/quality` |
+| 5 | `s05` | `src/xm_demanda/quality clases/c05-calidad-pipelines/notebooks` |
 | 6 | `s06` | `tests/unit src/xm_demanda docs/governance.md` |
 | 7 | `s07` | `notebooks/03_gold_features.py src/xm_demanda` |
 | 8 | `s08` | `tests src conf .github/workflows` |
