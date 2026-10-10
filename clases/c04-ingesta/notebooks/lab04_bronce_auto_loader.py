@@ -1,4 +1,11 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# dependencies = [
+#   "openpyxl",
+# ]
+# ///
 # MAGIC %md
 # MAGIC # Lab 4 — Bronce con Auto Loader: 23 publicaciones y una republicación
 # MAGIC
@@ -11,7 +18,7 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("usuario", "")
+dbutils.widgets.text("usuario", "jpatinofo")
 usuario = dbutils.widgets.get("usuario").strip().lower()
 assert usuario, "Escribe tu usuario (el sufijo de tu esquema c01_<usuario>)."
 
@@ -143,7 +150,7 @@ print("Idempotente: 145.408 filas las dos veces")
 # MAGIC %md
 # MAGIC **Pregunta.** ¿Qué pasaría si borras la carpeta `_checkpoints/bronze` y vuelves a correr? ¿Y si la borras junto con la tabla?
 # MAGIC
-# MAGIC _Tu respuesta:_
+# MAGIC _Tu respuesta:_ _Si se elimina la carpeta checkpoinys/bronze el autoloder no tendra manera de indentificar los nuevos registros, por tanto la proxima ejecución duplicara la información. Si elimino la tabla y ejecuto nuevamente, cargará la información nuevamente_
 
 # COMMAND ----------
 
@@ -175,13 +182,29 @@ FROM {tabla} WHERE _source_file LIKE '%raw_v2%' GROUP BY ALL
 
 # COMMAND ----------
 
+
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC **Pregunta.** Si `valor_nulo` es 0 arriba, `normalizar()` ya resolvió el alias `ValorKwh` usando `_rescued_data` (mira la función).
 # MAGIC Si es > 0, algo falta: ¿está `ValorKwh` en el dict `ALIAS`? ¿`resolver_alias` lo reconoce?
 # MAGIC
 # MAGIC ¿Por qué el valor rescatado llega como texto dentro de un JSON y no como columna? ¿Qué modo de `schemaEvolutionMode` lo habría agregado como columna, y qué riesgo tiene?
 # MAGIC
-# MAGIC _Tu respuesta:_
+# MAGIC _Tu respuesta:_ Porque el esquema del bronce está declarado de forma fija y explícita. Cuando Auto Loader encuentra una columna que no existe en ese esquema (como `ValorKwh` en `raw_v2`), no la agrega automáticamente: la mueve a la columna de rescate (`_rescued_data`). Esta columna es un contenedor genérico de tipo `STRING` que serializa los campos no reconocidos como texto JSON (por ejemplo `{"ValorKwh":"100.50"}`). No puede ser una columna real porque el esquema no la declara y el modo de evolución no permite crearla.
+# MAGIC
+# MAGIC **¿Qué modo de `schemaEvolutionMode` lo habría agregado como columna?**
+# MAGIC
+# MAGIC El modo `"addNewColumns"`. Con ese modo, Auto Loader detecta columnas nuevas en los archivos y las incorpora automáticamente al esquema de la tabla, sin intervención manual.
+# MAGIC
+# MAGIC **¿Qué riesgo tiene?**
+# MAGIC
+# MAGIC El riesgo es perder control sobre el esquema: cualquier cambio upstream (un rename, una columna nueva por error, un campo temporal) alteraría la tabla de forma silenciosa y permanente. En este caso, `ValorKwh` se habría agregado como una columna aparte, dejando `Valor` con valores antiguos y `ValorKwh` con los corregidos, sin que nadie lo detectara. Los consumidores downstream recibirían columnas inesperadas, las validaciones de calidad podrían romperse, y el esquema de la tabla quedaría contaminado con campos que tal vez no deberían existir. Por eso es preferible atrapar el cambio en `_rescued_data`, revisarlo y decidir conscientemente qué hacer.
+# MAGIC
+# MAGIC **¿Cuál sería la solución en código?**
+# MAGIC
+# MAGIC La solución no es cambiar `schemaEvolutionMode`, sino procesar `_rescued_data` dentro de `normalizar()` en `bronze.py`. El flujo es: `resolver_alias()` recibe las columnas rescatadas (extraídas del JSON de `_rescued_data`), consulta el dict `ALIAS` y devuelve el mapeo `{"ValorKwh": "Valor"}` solo para los alias conocidos. Luego `normalizar()` parsea el JSON de `_rescued_data`, extrae el valor de cada alias reconocido y lo escribe en la columna canónica correspondiente (`Valor`). Así, el dato corregido de `raw_v2` llega a la columna `Valor` en lugar de quedar atrapado como texto, el esquema de la tabla no se altera, y los cambios desconocidos siguen cayendo en `_rescued_data` para revisión manual. Si llegara un alias no previsto, `resolver_alias` lo ignora y el valor queda en `_rescued_data`, lo que permite detectarlo sin romper la pipeline.
 
 # COMMAND ----------
 
