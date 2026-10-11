@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # Lab 5 — Reglas de calidad, validador y cuarentena
 # MAGIC
@@ -11,7 +15,7 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("usuario", "")
+dbutils.widgets.text("usuario", "jpatinofo")
 usuario = dbutils.widgets.get("usuario").strip().lower()
 assert usuario, "Escribe tu usuario (el sufijo de tu esquema c01_<usuario>)."
 
@@ -157,10 +161,32 @@ except validador.ReglaFail as e:
 # MAGIC **Pregunta.** La regla `fail` detuvo todo por una sola fila. ¿Es la decisión correcta para una fecha del futuro? ¿Cuándo preferirías cuarentena?
 # MAGIC
 # MAGIC _Tu respuesta:_
+# MAGIC
+# MAGIC **¿Es correcto detener todo por una sola fila con fecha del futuro?**
+# MAGIC
+# MAGIC Sí, en este caso es la decisión correcta. Una fecha del futuro (por ejemplo, `2030-01-01`) no es un dato "malo" que se pueda aislar y corregir después — es un síntoma de que algo anda mal **antes** de la fila: un error de parseo, una columna mal mapeada, un archivo corrupto o un bug en la ingesta. Si dejamos pasar la fila, contamina la plata con un dato imposible de fecha, y los downstream (agregaciones, balance, reportes) producen resultados equivocados sin que nadie lo note. El `fail` actúa como un circuito breaker: detiene el lote entero, grita "algo estructural está mal", y obliga a un humano a investigar la causa raíz antes de seguir. En el lab, la solución fue rechazar la fila del futuro y revalidar — exactamente el patrón correcto.
+# MAGIC
+# MAGIC **¿Cuándo preferirías cuarentena?**
+# MAGIC
+# MAGIC Cuarentena es mejor cuando la fila es válida en forma (tipos correctos, fecha real) pero viola una **regla de negocio** que afecta solo a esa fila, no al proceso. Ejemplos:
+# MAGIC
+# MAGIC - **Valor negativo** (`valor_no_negativo`): la fila tiene estructura correcta, pero el valor no tiene sentido comercial. Se aísla, se notifica a la fuente, y el resto del lote sigue.
+# MAGIC - **Variable desconocida** o **regulado con CIIU**: son inconsistencias de dato, no de pipeline. Se cuarentenan para revisión y corrección sin detener a las 145.408 filas buenas.
+# MAGIC - **Balance pérdidas > demanda**: una serie-día específica rompe la relación esperada. Se aísla esa serie-día; las demás siguen disponibles.
+# MAGIC
+# MAGIC **Criterio general:**
+# MAGIC
+# MAGIC | Situación | Acción | Razón |
+# MAGIC |---|---|---|
+# MAGIC | Error que indica fallo estructural del proceso (fecha futura, esquema roto) | `fail` | El lote entero es sospechoso; detener evita propagar el daño |
+# MAGIC | Fila individual inválida pero aislable (valor negativo, CIIU en regulado) | `quarentena` / `drop` / `warn` | El resto del lote es confiable; aislar la fila y seguir |
+# MAGIC
+# MAGIC `fail` = "no confío en el lote". Cuarentena = "confío en el lote, no en esta fila".
 
 # COMMAND ----------
 
 # Quitamos la fila del futuro (en la vida real: se rechaza el archivo y se avisa a la fuente) y validamos de nuevo
+importlib.reload(validador)
 sin_futuro = con_malas.filter("Fecha <= current_date()")
 validas, cuarentena, metricas = validador.aplicar(sin_futuro, rules.REGLAS)
 escribir(validas, cuarentena, metricas, "vigente+sinteticas")
