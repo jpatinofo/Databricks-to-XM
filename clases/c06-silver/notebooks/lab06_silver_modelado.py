@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # Clase 6 — Modelado de plata: de reporte a tabla analítica
 # MAGIC
@@ -30,7 +34,7 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("usuario", "")
+dbutils.widgets.text("usuario", "jpatinofo")
 usuario = dbutils.widgets.get("usuario").strip().lower()
 assert usuario, "Escribe tu usuario (el sufijo de tu esquema c01_<usuario>)."
 
@@ -224,7 +228,7 @@ print("Filas en demanda_diaria:", spark.table(T_DIARIA).count())  # sigue en 72.
 # MAGIC **Pregunta.** Si la condición fuera `WHEN MATCHED THEN UPDATE SET *` (sin comparar `_publication_date`), ¿qué mostraría
 # MAGIC `actualizadas` en la segunda corrida? ¿Sigue siendo idempotente el resultado? ¿Y el historial?
 # MAGIC
-# MAGIC _Tu respuesta:_
+# MAGIC _Tu respuesta:_ Sin la condición, la segunda corrida mostraría `actualizadas = 72704`: cada fila se reescribe con el mismo valor. El resultado sigue siendo idempotente (la tabla queda igual), pero el historial no: cada corrida crea una versión completa que no cambió nada, cuesta tiempo y almacenamiento, y hace imposible distinguir una republicación real de una corrida rutinaria. La condición por `_publication_date` convierte el MERGE en 'solo lo que es más nuevo'.
 
 # COMMAND ----------
 
@@ -310,7 +314,7 @@ sin_match.display()
 # MAGIC **Pregunta.** ¿Cuál es la diferencia entre el texto de la fuente y el nombre oficial? ¿Es un error de XM, del DANE o de
 # MAGIC nadie? ¿Por qué lo resolvemos con un alias en `src` y no corrigiendo la fila en bronce?
 # MAGIC
-# MAGIC _Tu respuesta:_
+# MAGIC _Tu respuesta:_ La fuente dice "ENTRETENEMIENTO" y el nombre oficial "ENTRETENIMIENTO": un error de digitación en el sistema que genera el archivo de XM, no del DANE. Se resuelve con un alias en `src` porque bronce es evidencia (no se edita) y porque el próximo archivo traerá el mismo texto: el alias lo corrige para siempre, queda versionado en Git y con test; corregir la fila en bronce lo arreglaría una sola vez y borraría la prueba de que la fuente lo escribe así.
 # MAGIC
 # MAGIC **TODO:** agrega en `ALIAS_CIIU` la entrada `{texto normalizado de la fuente: texto normalizado oficial}` y vuelve a ejecutar.
 
