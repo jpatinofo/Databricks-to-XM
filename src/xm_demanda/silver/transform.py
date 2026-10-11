@@ -24,7 +24,10 @@ RENOMBRES = {
 # Textos de la fuente que no coinciden con el nombre oficial DANE (digitación, variantes).
 # Llave: texto normalizado tal como llega; valor: texto normalizado del nombre oficial.
 ALIAS_CIIU: dict[str, str] = {
-    # TODO (lab 6, paso 5): agregar el alias que detecte el anti-join.
+    # La fuente escribe "ENTRETENEMIENTO" (error de digitación); el DANE, "ENTRETENIMIENTO".
+    "ACTIVIDADES ARTISTICAS, DE ENTRETENEMIENTO Y RECREACION": (
+        "ACTIVIDADES ARTISTICAS, DE ENTRETENIMIENTO Y RECREACION"
+    ),
 }
 
 
@@ -36,9 +39,14 @@ def normalizar_texto(texto: str | None) -> str | None:
     >>> normalizar_texto(None) is None
     True
     """
-    # TODO (lab 6, paso 5): implementar. Pista: unicodedata.normalize("NFKD", texto) y quitar los
-    # caracteres con unicodedata.combining(c); luego " ".join(texto.split()).upper().
-    raise NotImplementedError("normalizar_texto: completa esta función (lab 6, paso 5)")
+    import unicodedata
+
+    if texto is None:
+        return None
+    sin_tildes = "".join(
+        c for c in unicodedata.normalize("NFKD", texto) if not unicodedata.combining(c)
+    )
+    return " ".join(sin_tildes.split()).upper()
 
 
 def a_formato_ancho(df):
