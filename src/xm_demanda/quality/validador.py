@@ -34,11 +34,16 @@ def evaluar(df, reglas: dict[str, tuple[str, str]]):
     queda con _fallas = ['valor_no_negativo', 'regulado_sin_clasificar'].
     Una fila válida queda con _fallas = [].
     """
-    from pyspark.sql import functions as F  # noqa: F401
+    from pyspark.sql import functions as F
 
-    # TODO (lab 5, paso 2): implementar. Pista: F.when(~F.expr(expr), F.lit(nombre)) por regla,
-    # F.array(...) y F.array_compact(...) para quitar los nulos.
-    raise NotImplementedError("evaluar: completa esta función (lab 5, paso 2)")
+    columnas = [
+        F.when(~F.expr(expr), F.lit(nombre))
+        for nombre, (expr, _) in reglas.items()
+    ]
+    return df.withColumn(
+        COLUMNA_FALLAS,
+        F.array_compact(F.array(*columnas)),
+    )
 
 
 def aplicar(df, reglas: dict[str, tuple[str, str]]):
@@ -53,7 +58,7 @@ def aplicar(df, reglas: dict[str, tuple[str, str]]):
     from pyspark.sql import functions as F
 
     validar_reglas(reglas)
-    evaluado = evaluar(df, reglas).cache()
+    evaluado = evaluar(df, reglas).localCheckpoint()
     evaluadas = evaluado.count()
     ejecutado_en = datetime.now(UTC)
 
