@@ -47,17 +47,30 @@ def agregar_calendario(df, festivos):
     """
     from pyspark.sql import functions as F  # noqa: F401
 
-    # TODO (lab 7, sección 3): implementar. Pistas: F.dayofweek, F.month, F.dayofyear,
-    # F.col("dia_semana").isin(1, 7), y un left join con festivos.select("fecha", F.lit(True)...).
-    raise NotImplementedError("agregar_calendario: completa esta función (lab 7, sección 3)")
+    marcados = festivos.select("fecha").distinct().withColumn("_festivo", F.lit(True))
+    anios = festivos.select(F.year("fecha").alias("_anio")).distinct()
+    anios = anios.withColumn("_cubierto", F.lit(True))
+    out = (
+        df.withColumn("dia_semana", F.dayofweek("fecha"))
+        .withColumn("es_fin_de_semana", F.col("dia_semana").isin(1, 7))
+        .withColumn("mes", F.month("fecha"))
+        .withColumn("dia_del_anio", F.dayofyear("fecha"))
+        .withColumn("_anio", F.year("fecha"))
+        .join(marcados, "fecha", "left")
+        .join(anios, "_anio", "left")
+    )
+    es_festivo = F.when(F.col("_cubierto"), F.coalesce(F.col("_festivo"), F.lit(False)))
+    return out.withColumn("es_festivo", es_festivo).drop("_festivo", "_anio", "_cubierto")
 
 
 def agregar_lags(df, lags: list[int]):
     """lag_k = valor de MEDIDA k días antes, dentro de la misma serie (nulo si no hay historia)."""
     from pyspark.sql import functions as F  # noqa: F401
 
-    # TODO (lab 7, sección 4): implementar con F.lag(MEDIDA, k).over(_ventana_serie()).
-    raise NotImplementedError("agregar_lags: completa esta función (lab 7, sección 4)")
+    w = _ventana_serie()
+    for k, nombre in zip(lags, nombres_lags(lags), strict=True):
+        df = df.withColumn(nombre, F.lag(MEDIDA, k).over(w))
+    return df
 
 
 def agregar_ventanas(df, ventanas: list[int]):
