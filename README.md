@@ -108,8 +108,8 @@ Hitos (según el programa del curso): H1 pregunta analítica · H2 arquitectura 
 - **Entregable:** `silver_energia.demanda_diaria` y `silver_energia.dim_ciiu`. Hito 3 cerrado.
 
 ### Clase 7 — Sumar fuentes y construir features (Gold)
-- **Teoría:** features para series temporales (lags, ventanas, calendario, estacionalidad); Feature Store en Unity Catalog (feature tables, lookups, point-in-time); Lakehouse Federation para consultar fuentes sin moverlas; cómo entra una fuente nueva sin romper el pipeline.
-- **Práctica:** incorporar calendario de festivos colombianos y un histórico más largo; construir `gold_energia.features_demanda_diaria`; ADR-002 "modelo global vs. un modelo por serie".
+- **Teoría:** qué es oro y qué es una feature; calendario y festivos como fuente; lags y ventanas con funciones de ventana; fuga de información y horizonte; series incompletas y ceros; Feature Engineering en Unity Catalog (llave primaria, lookups, point-in-time); Lakehouse Federation para consultar fuentes sin moverlas.
+- **Práctica:** incorporar `data/reference/festivos_co.csv`; implementar `agregar_calendario` y `agregar_lags` en `src/xm_demanda/features/build.py`; construir `features_demanda_diaria` con MERGE idempotente y llave primaria; ADR-003 (opcional) "features sobre la versión vigente vs. point-in-time".
 - **Sector:** variables que mueven la demanda en Colombia: festivos, hidrología y fenómeno de El Niño, temperatura, autogeneración; proyecciones de demanda de la UPME como referencia de largo plazo.
 - **Entregable:** tabla de features en Gold con documentación de cada variable. Hito 4 abierto.
 

@@ -26,7 +26,7 @@ Rutas que cambian en cada clase (lo demás del diff es ruido):
 | 4 | `s04` | `src/xm_demanda/ingest docs/adr/ADR-002-republicaciones.md clases/c04-ingesta/notebooks` |
 | 5 | `s05` | `src/xm_demanda/quality clases/c05-calidad-pipelines/notebooks` |
 | 6 | `s06` | `src/xm_demanda/silver clases/c06-silver/notebooks` |
-| 7 | `s07` | `notebooks/03_gold_features.py src/xm_demanda` |
+| 7 | `s07` | `src/xm_demanda/features clases/c07-features-gold/notebooks notebooks/03_gold_features.py` |
 | 8 | `s08` | `tests src conf .github/workflows` |
 | 9 | `s09` | `notebooks/04_train.py src/xm_demanda` |
 | 10 | `s10` | `notebooks/04_train.py notebooks/05_batch_inference.py` |
