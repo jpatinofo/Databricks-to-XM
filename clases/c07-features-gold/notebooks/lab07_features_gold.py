@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC # Clase 7 — Oro: features para pronosticar la demanda
 # MAGIC
@@ -26,7 +30,7 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("usuario", "")
+dbutils.widgets.text("usuario", "jpatinofo")
 usuario = dbutils.widgets.get("usuario").strip().lower()
 assert usuario, "Escribe tu usuario (el sufijo de tu esquema c01_<usuario>)."
 
@@ -247,7 +251,7 @@ con_lags = fb.agregar_lags(con_calendario, cfg["modelo"]["lags"])
 con_ventanas = fb.agregar_ventanas(con_lags, cfg["modelo"]["ventanas"])
 
 assert set(fb.nombres_lags(cfg["modelo"]["lags"])) <= set(con_lags.columns)
-serie_top = con_ventanas.filter("codigo_sic_agente = 'ENDD' AND tipo_mercado = 'Regulado' AND mercado_comercializacion = 'BOGOTA-CUNDINAMARCA'")
+serie_top = con_ventanas.filter("codigo_sic_agente = 'ENDD' AND tipo_mercado = 'Regulado' AND mercado_comercializacion = 'BOGOTA - CUNDINAMARCA'")
 display(
     serie_top.filter("fecha BETWEEN '2026-06-12' AND '2026-06-29'")
     .select("fecha", "dia_semana", (F.col("demanda_real_kwh") / 1e6).alias("gwh"), (F.col("lag_7") / 1e6).alias("lag_7_gwh"),
@@ -308,7 +312,9 @@ display(comparacion.orderBy("fecha"))
 # MAGIC demanda del propio 22. ¿Por qué el modelo entrenado con esa columna daría un error casi nulo en el notebook y uno
 # MAGIC mucho mayor en producción? Escribe dos frases.
 # MAGIC
-# MAGIC > Tu respuesta:
+# MAGIC > Tu respuesta:  Con `media_7_con_fuga` y los seis lags anteriores, el modelo puede despejar la demanda de hoy con una resta (7 × media − suma de los lags): en el notebook aprende esa identidad y su error es casi cero. En producción, la fila de hoy se construye hoy y `media_7_con_fuga` de hoy solo se puede calcular mañana, cuando ya se conoce la demanda: la feature no existe en el momento de predecir y el modelo pierde su truco; el error real es el de un modelo que nunca aprendió los patrones de verdad.
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -386,7 +392,9 @@ display(spark.sql(f"DESCRIBE HISTORY {T_FEATURES}").select("version", "operation
 # MAGIC MERGE daba 0/0. ¿Qué diferencia hay entre `merge_features` y `merge_demanda_diaria` que lo explica, y qué columna hace
 # MAGIC que las filas "cambien" aunque los datos sean los mismos? ¿Está bien así o lo cambiarías?
 # MAGIC
-# MAGIC > Tu respuesta:
+# MAGIC > Tu respuesta: `merge_demanda_diaria` solo actualiza `WHEN MATCHED AND s._publication_date > t._publication_date`; `merge_features` actualiza siempre que la llave coincida. Y `_features_built_at = current_timestamp()` cambia en cada construcción, así que `UPDATE SET *` reescribe las 72.704 filas aunque todos los valores de negocio sean iguales. Está bien para una tabla que se reconstruye completa cada día (oro es derivada; la fuente de verdad es plata) y deja rastro de cuándo se construyó; pero es caro en historial y no distingue una corrida rutinaria de un cambio real. Alternativa: comparar solo columnas de negocio en el `WHEN MATCHED` (`hash` de las columnas), o construir solo las fechas afectadas por la última publicación de plata.
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
