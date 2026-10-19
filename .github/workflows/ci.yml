@@ -16,11 +16,24 @@ jobs:
       - run: ruff check .
       - run: pytest tests/unit
 
+  # Pruebas de integración con Spark local (clase 8). Reglas del contrato de oro sobre datos sintéticos.
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - run: pip install -e ".[dev,spark]"
+      - run: pytest tests/integration -q
+
   # Los jobs de deploy solo corren si el repo tiene la variable DATABRICKS_DEPLOY=true
-  # (Settings → Secrets and variables → Actions → Variables). Se activa en la clase 13.
+  # (Settings → Secrets and variables → Actions → Variables). En los forks de los
+  # estudiantes queda apagado hasta la clase 13.
   deploy-dev:
     if: github.ref == 'refs/heads/main' && vars.DATABRICKS_DEPLOY == 'true'
-    needs: test
+    needs: [test, integration]
     runs-on: ubuntu-latest
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
@@ -33,7 +46,7 @@ jobs:
 
   deploy-qa:
     if: startsWith(github.ref, 'refs/tags/v') && vars.DATABRICKS_DEPLOY == 'true'
-    needs: test
+    needs: [test, integration]
     runs-on: ubuntu-latest
     environment: qa
     env:
@@ -45,10 +58,10 @@ jobs:
       - run: databricks bundle deploy -t qa
 
   deploy-prod:
-    if: startsWith(github.ref, 'refs/tags/v') && vars.DATABRICKS_DEPLOY == 'true'
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: deploy-qa
     runs-on: ubuntu-latest
-    environment: prod
+    environment: prod   # requiere aprobación manual configurada en GitHub
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}

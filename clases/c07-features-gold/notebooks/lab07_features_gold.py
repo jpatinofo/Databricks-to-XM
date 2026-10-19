@@ -91,6 +91,7 @@ print("Config del modelo:", cfg["modelo"])
 # MAGIC |---|---|---|
 # MAGIC | Llave | `fecha` + las 4 de serie (igual que plata) | única; el MERGE la usa |
 # MAGIC | Medida | `demanda_real_kwh` | copiada de plata (el modelo también la usa como `lag_0`) |
+# MAGIC | Categórica | `ciiu_seccion` | de plata (`dim_ciiu`, clase 6); sección económica, `X` en regulado. Se conoce en `t` |
 # MAGIC | Calendario | `dia_semana`, `es_fin_de_semana`, `es_festivo`, `mes`, `dia_del_anio` | se conoce de antemano: sin nulos, nunca |
 # MAGIC | Historia | `lag_1`, `lag_7`, `lag_14`, `lag_28` | nulo solo cuando no hay historia (primeros días de la serie) |
 # MAGIC | Ventanas | `media_7`, `desv_7`, `media_28`, `desv_28` | sobre `t-n … t-1`; **nunca incluyen `t`** |
@@ -98,7 +99,7 @@ print("Config del modelo:", cfg["modelo"])
 # MAGIC | Objetivo | `y_h7` | `demanda_real_kwh` en `t+7`; nulo en los últimos 7 días de cada serie |
 # MAGIC | Auditoría | `_features_built_at` | cuándo se construyó la fila |
 # MAGIC
-# MAGIC Lo que **no** hay: columnas de la fuente que el modelo no necesita (`perdidas_kwh`, `_publication_date`). Oro es
+# MAGIC Lo que **no** hay: columnas de la fuente que el modelo no necesita (`perdidas_kwh`, `_publication_date`): `construir_features` las deja en plata. Oro es
 # MAGIC estrecho a propósito: cada columna tiene un porqué. Y las listas de lags y ventanas **no están escritas en el código**:
 # MAGIC vienen de `conf/base.yml` (`modelo.lags`, `modelo.ventanas`, `modelo.horizon_days`). Cambiar el experimento es cambiar
 # MAGIC un archivo de configuración, no reescribir una función (clase 8 profundiza en esto).

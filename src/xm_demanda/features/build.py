@@ -28,6 +28,24 @@ def nombres_ventanas(ventanas: list[int]) -> list[str]:
     return [f"media_{n}" for n in ventanas] + [f"desv_{n}" for n in ventanas]
 
 
+COLUMNAS_CATEGORICAS = ["ciiu_seccion"]  # de plata; categórica conocida en t
+COLUMNAS_CALENDARIO = ["dia_semana", "es_fin_de_semana", "es_festivo", "mes", "dia_del_anio"]
+COLUMNAS_BANDERAS = ["es_cero", "dias_con_datos"]
+
+
+def columnas_contrato(cfg: dict) -> list[str]:
+    """Columnas de features_demanda_diaria, en orden, derivadas de la configuración.
+
+    Es el contrato de oro como código: la tabla real debe tener exactamente estas columnas.
+    Pura: se prueba sin Spark y la usa verificar() en el lab y el notebook de producción.
+    [llave, medida, categóricas, calendario, lags, ventanas, banderas, objetivo, _features_built_at]
+    """
+    # TODO (lab 8, sección 3): implementar con LLAVE, MEDIDA, COLUMNAS_CATEGORICAS,
+    # COLUMNAS_CALENDARIO, nombres_lags(m["lags"]), nombres_ventanas(m["ventanas"]),
+    # COLUMNAS_BANDERAS, f"y_h{m['horizon_days']}" y "_features_built_at", con m = cfg["modelo"].
+    raise NotImplementedError("columnas_contrato: completa esta función (lab 8, sección 3)")
+
+
 def es_fin_de_semana(dia_semana: int) -> bool:
     """dia_semana con la convención de Spark dayofweek: 1 = domingo … 7 = sábado."""
     return dia_semana in (1, 7)
@@ -114,7 +132,11 @@ def construir_features(df, festivos, cfg: dict):
         .transform(agregar_banderas)
         .transform(lambda d: agregar_objetivo(d, m["horizon_days"]))
     )
-    return out.withColumn("_features_built_at", F.current_timestamp())
+    out = out.withColumn("_features_built_at", F.current_timestamp())
+    # Oro es estrecho a propósito: llave, medida, categóricas y lo que se construyó aquí.
+    # perdidas_kwh y _publication_date se quedan en plata.
+    nuevas = [c for c in out.columns if c not in df.columns]
+    return out.select(*LLAVE, MEDIDA, *COLUMNAS_CATEGORICAS, *nuevas)
 
 
 def merge_features(spark, df, tabla: str) -> None:

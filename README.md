@@ -114,10 +114,10 @@ Hitos (según el programa del curso): H1 pregunta analítica · H2 arquitectura 
 - **Entregable:** tabla de features en Gold con documentación de cada variable. Hito 4 abierto.
 
 ### Clase 8 — Código, configuración y datos separados
-- **Teoría:** Git folders y repositorios; estrategia de ramas y PR; notebooks delgados + paquete Python; tests unitarios e integración; ruff y pre-commit; configuración por ambiente sin secretos; uso de Databricks Assistant y asistentes de código con verificación.
-- **Práctica:** mover lógica a `src/xm_demanda/`; escribir tests con pytest; abrir el primer PR y dejar que CI lo revise; un PR que rompe un test.
-- **Sector:** reproducibilidad como requisito ante auditoría regulatoria: poder reconstruir hoy el pronóstico que se publicó hace seis meses.
-- **Entregable:** paquete `xm_demanda` con tests pasando en CI. Hito 4 cerrado.
+- **Teoría:** por qué código, configuración y datos cambian a ritmos distintos; notebooks delgados + paquete `xm_demanda`; el camino de un cambio (rama → PR → CI → merge → tag → despliegue); la pirámide de pruebas del proyecto (ruff, unitarias puras, integración con Spark, `verificar()` sobre datos reales); configuración por ambiente sin secretos (secret scopes); asistentes de código con verificación; reproducibilidad: las cuatro versiones de un pronóstico.
+- **Práctica:** `validar_config`; el contrato de oro como código (`columnas_contrato`); correr ruff y pytest desde Databricks; un test de integración que distingue la ventana correcta de la que tiene fuga; CI con job de integración (Spark local); el PR que debe fallar.
+- **Sector:** reproducibilidad como requisito ante auditoría regulatoria: poder reconstruir hoy el pronóstico que se publicó hace seis meses (código, configuración, versión Delta, modelo).
+- **Entregable:** paquete `xm_demanda` con tests unitarios y de integración pasando en CI; evidencia de un PR detenido por CI. Hito 4 cerrado.
 
 ### Clase 9 — Experimentación con MLflow
 - **Teoría:** MLflow 3 en Databricks: experimentos, runs, artefactos, `log_input`, evaluación y comparación; baselines honestos; validación temporal; errores típicos (leakage, métricas globales que esconden segmentos).

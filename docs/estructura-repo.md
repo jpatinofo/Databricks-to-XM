@@ -26,7 +26,7 @@ Databricks-to-XM/
 | 1–2 | `docs/architecture.md`, ADR-001, primera tabla Delta |
 | 3 | `docs/governance.md`, catálogos y grants |
 | 4–7 | `src/xm_demanda/ingest`, `quality`, `features`; notebooks 01–03; `resources/pipeline_silver.yml` |
-| 8 | Tests, ruff, pre-commit, primer PR |
+| 8 | `validar_config`, contrato de oro como código, `tests/integration` con Spark, job `integration` en CI, el PR que debe fallar |
 | 9–11 | `src/xm_demanda/model`; notebooks 04–05; `app/` |
 | 12–14 | `resources/job_inference.yml`, `databricks.yml` completo, CI/CD |
 | 15 | notebook 06, `docs/runbook.md` |

@@ -18,7 +18,7 @@ stages:
         steps:
           - task: UsePythonVersion@0
             inputs: { versionSpec: "3.11" }
-          - script: pip install -e ".[dev]" && ruff check . && pytest tests/unit
+          - script: pip install -e ".[dev,spark]" && ruff check . && pytest tests/unit && pytest tests/integration
 
   - stage: DeployDev
     dependsOn: Test

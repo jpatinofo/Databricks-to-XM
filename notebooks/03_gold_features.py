@@ -23,10 +23,11 @@ from pyspark.sql import functions as F
 raiz = os.path.dirname(os.getcwd())
 sys.path.insert(0, os.path.join(raiz, "src"))
 
-from xm_demanda.features.build import LLAVE, construir_features, merge_features
-from xm_demanda.utils.config import fqn, load_config
+from xm_demanda.features.build import LLAVE, columnas_contrato, construir_features, merge_features
+from xm_demanda.utils.config import fqn, load_config, validar_config
 
 cfg = load_config(catalog)
+validar_config(cfg)  # clase 8: falla al arrancar si falta una llave o hay un secreto en conf/
 fuente = fqn(cfg, "silver", "silver_diaria")
 destino = fqn(cfg, "gold", "gold_features")
 ruta_festivos = os.path.join(raiz, "data", "reference", "festivos_co.csv")
@@ -54,6 +55,7 @@ spark.sql(f"ALTER TABLE {destino} ADD CONSTRAINT pk_features_demanda_diaria PRIM
 
 # Verificación que rompe el job si oro quedó mal (el equivalente de una expectation 'fail').
 t = spark.table(destino)
+assert set(t.columns) == set(columnas_contrato(cfg)), "La tabla de oro no cumple el contrato (clase 8)"
 sin_calendario = t.filter("es_festivo IS NULL OR dia_semana IS NULL").count()
 assert sin_calendario == 0, f"{sin_calendario} filas sin calendario: ¿falta un año en festivos_co.csv?"
 display(spark.sql(f"""
